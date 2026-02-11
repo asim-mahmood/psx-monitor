@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PSX Portfolio Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+            padding: 15px;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 800;
+            color: #1a2a6c;
+            font-size: 24px;
+        }
+
+        h2 {
+            font-size: 18px;
+            color: #2d3436;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px 15px;
+            border: 2px solid #e1e4e8;
+            border-radius: 10px;
+            font-size: 15px;
+            text-transform: uppercase;
+            font-weight: 600;
+            outline: none;
+        }
+
+        button {
+            padding: 12px 20px;
+            background: #2c5364;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        button:hover {
+            background: #203a43;
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .watchlist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .stock-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 18px;
+            border: 2px solid #eee;
+            position: relative;
+            transition: 0.3s;
+        }
+
+        .stock-card:hover {
+            border-color: #2c5364;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: #d63031;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+            padding: 0;
+        }
+
+        .stock-symbol {
+            font-size: 22px;
+            font-weight: 800;
+            color: #2d3436;
+            margin-bottom: 10px;
+            padding-right: 35px;
+        }
+
+        .live-badge {
+            font-size: 9px;
+            background: #00b894;
+            color: white;
+            padding: 3px 7px;
+            border-radius: 4px;
+            margin-left: 6px;
+            animation: pulse 2s infinite;
+            display: inline-block;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 12px 0;
+            gap: 10px;
+        }
+
+        .current-price {
+            font-size: 26px;
+            font-weight: 700;
+            word-break: break-word;
+        }
+
+        .price-change {
+            font-size: 13px;
+            font-weight: 600;
+            text-align: right;
+        }
+
+        .update-time {
+            font-size: 10px;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        .sparkline-container {
+            margin: 15px 0;
+            height: 50px;
+            position: relative;
+        }
+
+        .sparkline {
+            width: 100%;
+            height: 100%;
+        }
+
+        .mini-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .mini-stat {
+            text-align: center;
+        }
+
+        .mini-stat-label {
+            font-size: 9px;
+            color: #636e72;
+            text-transform: uppercase;
+            margin-bottom: 3px;
+            letter-spacing: 0.5px;
+        }
+
+        .mini-stat-value {
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .alert-section {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .alert-input-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 8px;
+        }
+
+        .alert-input-group input {
+            padding: 8px 10px;
+            font-size: 13px;
+            min-width: 0;
+        }
+
+        .alert-input-group button {
+            padding: 8px 14px;
+            font-size: 13px;
+            background: #0984e3;
+        }
+
+        .alert-badge {
+            background: #fdcb6e;
+            color: #2d3436;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .alert-badge button {
+            background: none;
+            border: none;
+            color: #d63031;
+            cursor: pointer;
+            padding: 0 5px;
+            font-size: 18px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #636e72;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            background: #00b894;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* Alerts Panel */
+        .alerts-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px solid #f0f0f0;
+        }
+
+        .alert-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #fdcb6e;
+        }
+
+        .alert-info {
+            flex: 1;
+        }
+
+        .alert-symbol {
+            font-weight: 700;
+            font-size: 16px;
+            color: #2d3436;
+        }
+
+        .alert-target {
+            font-size: 13px;
+            color: #636e72;
+            margin-top: 3px;
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .alert-actions button {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .alert-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .alert-status.active {
+            background: #00b894;
+            color: white;
+        }
+
+        .alert-status.paused {
+            background: #636e72;
+            color: white;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            max-width: 350px;
+        }
+
+        .toast {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            box-shadow: 0 5px 25px rgba(0, 0, 0, 0.2);
+            border-left: 5px solid #00b894;
+            animation: slideIn 0.3s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toast.success {
+            border-left-color: #00b894;
+        }
+
+        .toast.error {
+            border-left-color: #d63031;
+        }
+
+        .toast.warning {
+            border-left-color: #fdcb6e;
+        }
+
+        .toast.info {
+            border-left-color: #0984e3;
+        }
+
+        .toast-icon {
+            font-size: 24px;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+
+        .toast-message {
+            font-size: 12px;
+            color: #636e72;
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #636e72;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 15px;
+                margin: 10px auto;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            button {
+                width: 100%;
+            }
+
+            .watchlist-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .alert-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .alert-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container">
+        <h1>📊 PSX Portfolio</h1>
+
+        <div class="input-group">
+            <input type="text" id="newStock" placeholder="Add Stock (e.g. UBL, MEBL)" onfocus="this.select()">
+            <button onclick="addStock()">➕ Add Stock</button>
+        </div>
+
+        <div class="controls">
+            <div class="control-buttons">
+                <button onclick="startAll()" style="background: #00b894;">▶ Start Monitoring</button>
+                <button onclick="stopAll()" style="background: #d63031;">⏹ Stop Monitoring</button>
+            </div>
+            <div id="status" class="status-badge" style="background: #636e72;">Stopped</div>
+        </div>
+
+        <div id="watchlist" class="watchlist-grid"></div>
+
+        <!-- Alerts Management Panel -->
+        <div class="alerts-panel">
+            <h2>🔔 Active Alerts</h2>
+            <div id="alertsList"></div>
+        </div>
+    </div>
+
+    <script>
+        let watchlist = JSON.parse(localStorage.getItem('psx_watchlist')) || ['UBL', 'MEBL', 'OGDC'];
+        let alerts = JSON.parse(localStorage.getItem('psx_alerts')) || {};
+        let alertsEnabled = JSON.parse(localStorage.getItem('psx_alerts_enabled')) || {};
+        let priceHistory = {};
+        let updateInterval = null;
+        let isRunning = false;
+
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        function showToast(title, message, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+
+            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close" onclick="this.parentElement.remove()">×</button>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function formatPrice(price) {
+            if (price < 10) return price.toFixed(4);
+            else if (price < 100) return price.toFixed(3);
+            else return price.toFixed(2);
+        }
+
+        function saveWatchlist() {
+            localStorage.setItem('psx_watchlist', JSON.stringify(watchlist));
+        }
+
+        function saveAlerts() {
+            localStorage.setItem('psx_alerts', JSON.stringify(alerts));
+            localStorage.setItem('psx_alerts_enabled', JSON.stringify(alertsEnabled));
+        }
+
+        async function addStock() {
+            const symbol = document.getElementById('newStock').value.trim().toUpperCase();
+            if (!symbol) return;
+
+            if (watchlist.includes(symbol)) {
+                showToast('Already Added', `${symbol} is in watchlist`, 'warning');
+                return;
+            }
+
+            watchlist.push(symbol);
+            priceHistory[symbol] = [];
+            saveWatchlist();
+            document.getElementById('newStock').value = '';
+
+            renderWatchlist();
+            showToast('Stock Added', `${symbol} added`, 'success');
+
+            // Don't stop monitoring when adding
+            await fetchAndUpdate(symbol);
+        }
+
+        function removeStock(symbol) {
+            watchlist = watchlist.filter(s => s !== symbol);
+            delete alerts[symbol];
+            delete alertsEnabled[symbol];
+            delete priceHistory[symbol];
+            saveWatchlist();
+            saveAlerts();
+            renderWatchlist();
+            renderAlertsList();
+            showToast('Removed', `${symbol} removed`, 'info');
+        }
+
+        function setAlert(symbol) {
+            const input = document.getElementById(`alert-${symbol}`);
+            const price = parseFloat(input.value);
+
+            if (!price || price <= 0) {
+                showToast('Invalid Price', 'Enter valid price', 'error');
+                return;
+            }
+
+            alerts[symbol] = price;
+            alertsEnabled[symbol] = true;
+            saveAlerts();
+            renderWatchlist();
+            renderAlertsList();
+            showToast('Alert Set', `${symbol} @ Rs. ${formatPrice(price)}`, 'success');
+        }
+
+        function toggleAlert(symbol) {
+            alertsEnabled[symbol] = !alertsEnabled[symbol];
+            saveAlerts();
+            renderAlertsList();
+            const status = alertsEnabled[symbol] ? 'enabled' : 'paused';
+            showToast('Alert ' + status, `${symbol} alert ${status}`, 'info');
+        }
+
+        function deleteAlert(symbol) {
+            delete alerts[symbol];
+            delete alertsEnabled[symbol];
+            saveAlerts();
+            renderWatchlist();
+            renderAlertsList();
+            showToast('Alert Deleted', `${symbol} alert removed`, 'info');
+        }
+
+        async function startAll() {
+            if (watchlist.length === 0) {
+                showToast('No Stocks', 'Add stocks first', 'warning');
+                return;
+            }
+
+            isRunning = true;
+            document.getElementById('status').textContent = 'Live ●';
+            document.getElementById('status').style.background = '#00b894';
+
+            // Initial update
+            await updateAllStocks();
+
+            // CRITICAL FIX: Clear any existing interval first
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                console.log('Cleared old interval');
+            }
+
+            // Start new interval
+            updateInterval = setInterval(async () => {
+                console.log('Auto-refresh triggered at', new Date().toLocaleTimeString());
+                await updateAllStocks();
+            }, 30000);
+
+            console.log('Monitoring started, interval ID:', updateInterval);
+            showToast('Started', 'Auto-refresh every 30s', 'success');
+        }
+
+        function stopAll() {
+            isRunning = false;
+            if (updateInterval) {
+                clearInterval(updateInterval);
+                updateInterval = null;
+                console.log('Interval cleared');
+            }
+            document.getElementById('status').textContent = 'Stopped';
+            document.getElementById('status').style.background = '#636e72';
+            showToast('Stopped', 'Monitoring paused', 'info');
+        }
+
+        async function updateAllStocks() {
+            console.log('Updating all stocks...');
+            for (const symbol of watchlist) {
+                await fetchAndUpdate(symbol);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            console.log('Update complete');
+        }
+
+        async function fetchAndUpdate(symbol) {
+            try {
+                const target = `https://dps.psx.com.pk/timeseries/int/${symbol}?t=${Date.now()}`;
+                const proxy = `https://corsproxy.io/?${encodeURIComponent(target)}`;
+
+                const response = await fetch(proxy);
+                const apiResponse = await response.json();
+
+                let ticks = apiResponse.data || apiResponse;
+
+                if (!Array.isArray(ticks) || ticks.length === 0) throw new Error('No data');
+
+                const current = ticks[0][1];
+                const open = ticks[ticks.length - 1][1];
+
+                let high = -Infinity, low = Infinity, vol = 0;
+
+                ticks.forEach(t => {
+                    if (t[1] > high) high = t[1];
+                    if (t[1] < low) low = t[1];
+                    vol += t[2];
+                });
+
+                if (!priceHistory[symbol]) priceHistory[symbol] = [];
+                priceHistory[symbol].push(current);
+                if (priceHistory[symbol].length > 30) priceHistory[symbol].shift();
+
+                const change = current - open;
+                const percent = ((change / open) * 100).toFixed(2);
+                const time = new Date(ticks[0][0] * 1000).toLocaleTimeString('en-US', {
+                    hour: '2-digit', minute: '2-digit'
+                });
+
+                renderStockCard(symbol, { current, open, high, low, vol, change, percent, time });
+
+                // Check alerts
+                if (alerts[symbol] && alertsEnabled[symbol] && current >= alerts[symbol]) {
+                    showToast(`🎯 ${symbol} Hit!`, `Rs. ${formatPrice(current)}`, 'success');
+
+                    if (Notification.permission === "granted") {
+                        new Notification(`${symbol} Target Hit!`, {
+                            body: `Price: Rs. ${formatPrice(current)}`,
+                            requireInteraction: true
+                        });
+                    }
+
+                    // Pause alert instead of deleting
+                    alertsEnabled[symbol] = false;
+                    saveAlerts();
+                    renderAlertsList();
+                }
+
+            } catch (err) {
+                console.error(`Failed: ${symbol}`, err);
+            }
+        }
+
+        function drawSparkline(prices, color) {
+            if (!prices || prices.length < 2) return '';
+
+            const max = Math.max(...prices);
+            const min = Math.min(...prices);
+            const range = max - min || 1;
+            const width = 100, height = 50;
+
+            const points = prices.map((price, i) => {
+                const x = (i / (prices.length - 1)) * width;
+                const y = height - ((price - min) / range) * height;
+                return `${x},${y}`;
+            }).join(' ');
+
+            return `<svg class="sparkline" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
+                <polyline fill="none" stroke="${color}" stroke-width="2" points="${points}"/>
+            </svg>`;
+        }
+
+        function renderWatchlist() {
+            const container = document.getElementById('watchlist');
+
+            if (watchlist.length === 0) {
+                container.innerHTML = '<div class="empty-state">📈 Add stocks</div>';
+                return;
+            }
+
+            container.innerHTML = watchlist.map(symbol => `
+                <div class="stock-card" id="card-${symbol}">
+                    <button class="remove-btn" onclick="removeStock('${symbol}')">×</button>
+                    <div class="stock-symbol">
+                        ${symbol} <span class="live-badge" style="background: #636e72; animation: none;">WAIT</span>
+                    </div>
+                    <div class="price-row">
+                        <div class="current-price" style="color: #636e72;">--</div>
+                        <div class="price-change">--</div>
+                    </div>
+                    <div class="sparkline-container"></div>
+                    <div class="mini-stats">
+                        <div class="mini-stat"><div class="mini-stat-label">Open</div><div class="mini-stat-value">--</div></div>
+                        <div class="mini-stat"><div class="mini-stat-label">High</div><div class="mini-stat-value">--</div></div>
+                        <div class="mini-stat"><div class="mini-stat-label">Low</div><div class="mini-stat-value">--</div></div>
+                    </div>
+                    <div class="alert-section">
+                        <div class="alert-input-group">
+                            <input type="number" id="alert-${symbol}" placeholder="Set Alert" step="0.01" value="${alerts[symbol] || ''}">
+                            <button onclick="setAlert('${symbol}')">Set</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderStockCard(symbol, data) {
+            const color = data.change >= 0 ? '#00b894' : '#d63031';
+            const arrow = data.change >= 0 ? '▲' : '▼';
+            const card = document.getElementById(`card-${symbol}`);
+            if (!card) return;
+
+            const sparkline = priceHistory[symbol] ? drawSparkline(priceHistory[symbol], color) : '';
+
+            card.innerHTML = `
+                <button class="remove-btn" onclick="removeStock('${symbol}')">×</button>
+                <div class="stock-symbol">${symbol} <span class="live-badge">LIVE</span></div>
+                <div class="price-row">
+                    <div class="current-price" style="color: ${color}">Rs. ${formatPrice(data.current)}</div>
+                    <div class="price-change" style="color: ${color}">${arrow} ${Math.abs(data.change).toFixed(2)}<br>(${data.percent}%)</div>
+                </div>
+                <div class="update-time">${data.time}</div>
+                <div class="sparkline-container">${sparkline}</div>
+                <div class="mini-stats">
+                    <div class="mini-stat"><div class="mini-stat-label">Open</div><div class="mini-stat-value">${formatPrice(data.open)}</div></div>
+                    <div class="mini-stat"><div class="mini-stat-label">High</div><div class="mini-stat-value">${formatPrice(data.high)}</div></div>
+                    <div class="mini-stat"><div class="mini-stat-label">Low</div><div class="mini-stat-value">${formatPrice(data.low)}</div></div>
+                </div>
+                <div class="alert-section">
+                    <div class="alert-input-group">
+                        <input type="number" id="alert-${symbol}" placeholder="Set Alert" step="0.01" value="${alerts[symbol] || ''}">
+                        <button onclick="setAlert('${symbol}')">Set</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAlertsList() {
+            const container = document.getElementById('alertsList');
+            const alertSymbols = Object.keys(alerts);
+
+            if (alertSymbols.length === 0) {
+                container.innerHTML = '<div class="empty-state">No alerts set</div>';
+                return;
+            }
+
+            container.innerHTML = alertSymbols.map(symbol => {
+                const isActive = alertsEnabled[symbol] !== false;
+                return `
+                    <div class="alert-item">
+                        <div class="alert-info">
+                            <div class="alert-symbol">
+                                ${symbol}
+                                <span class="alert-status ${isActive ? 'active' : 'paused'}">
+                                    ${isActive ? 'ACTIVE' : 'PAUSED'}
+                                </span>
+                            </div>
+                            <div class="alert-target">Target: Rs. ${formatPrice(alerts[symbol])}</div>
+                        </div>
+                        <div class="alert-actions">
+                            <button onclick="toggleAlert('${symbol}')" style="background: ${isActive ? '#636e72' : '#00b894'};">
+                                ${isActive ? '⏸ Pause' : '▶ Resume'}
+                            </button>
+                            <button onclick="deleteAlert('${symbol}')" style="background: #d63031;">
+                                🗑 Delete
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('newStock').addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') addStock();
+        });
+
+        window.onload = async () => {
+            renderWatchlist();
+            renderAlertsList();
+            for (const symbol of watchlist) {
+                await fetchAndUpdate(symbol);
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        };
+    </script>
+</body>
+
+</html>
